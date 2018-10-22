@@ -6,13 +6,13 @@ import tensorflow as tf
 from transformer.ops.unrolling import unroll
 
 # scaled dot-product attention
-def attention(query, key, value, kernel_shape=(5, 5), strides=(1, 1)):
+def attention(query, key, value, kernel_size=(5, 5), strides=(1, 1)):
     batch, height, width, depth = query.shape.as_list()
     _, _, _, value_depth = value.shape.as_list()
 
-    unrolled_query = tf.reshape(unroll(query, kernel_shape=(1, 1), strides=strides), (-1, 1, depth))
-    unrolled_key = tf.reshape(unroll(key, kernel_shape=kernel_shape, strides=strides), (-1, kernel_shape[0] * kernel_shape[1], depth))
-    unrolled_value = tf.reshape(unroll(value, kernel_shape=kernel_shape, strides=strides), (-1, kernel_shape[0] * kernel_shape[1], value_depth))
+    unrolled_query = tf.reshape(unroll(query, kernel_size=(1, 1), strides=strides), (-1, 1, depth))
+    unrolled_key = tf.reshape(unroll(key, kernel_size=kernel_size, strides=strides), (-1, kernel_size[0] * kernel_size[1], depth))
+    unrolled_value = tf.reshape(unroll(value, kernel_size=kernel_size, strides=strides), (-1, kernel_size[0] * kernel_size[1], value_depth))
     tf.logging.debug('attention tensor query: %s', unrolled_query.get_shape())
     tf.logging.debug('attention tensor key:   %s', unrolled_key.get_shape())
     tf.logging.debug('attention tensor value: %s', unrolled_value.get_shape())
@@ -25,30 +25,30 @@ def attention(query, key, value, kernel_shape=(5, 5), strides=(1, 1)):
     tf.logging.debug('attention tensor response: %s', response.get_shape())
 
     # rshape
-    distribution = tf.reshape(distribution, (-1, height // strides[1], width // strides[0], 1, kernel_shape[1], kernel_shape[0]))
+    distribution = tf.reshape(distribution, (-1, height // strides[1], width // strides[0], 1, kernel_size[1], kernel_size[0]))
     response = tf.reshape(response, (-1, height // strides[1], width // strides[0], value_depth))
     tf.logging.debug('attention tensor reshaped response: %s', response.get_shape())
     return distribution, response
 
-def self_attention(tensor, filters=64, kernel_shape=(5, 5), strides=(1, 1)):
+def self_attention(tensor, filters=64, kernel_size=(5, 5), strides=(1, 1)):
     query = tf.layers.conv2d(tensor, filters, kernel_size=(1, 1))
     key = tf.layers.conv2d(tensor, filters, kernel_size=(1, 1))
     value = tf.layers.conv2d(tensor, filters, kernel_size=(1, 1))
 
-    return attention(query, key, value, kernel_shape, strides)
+    return attention(query, key, value, kernel_size, strides)
 
-def multi_head_attention(tensor, headers=8, filters=64, kernel_shape=(5, 5), strides=(1, 1)):
+def multi_head_attention(tensor, headers=8, filters=64, kernel_size=(5, 5), strides=(1, 1)):
     responses = []
     for _ in range(headers):
-        _, response = self_attention(tensor, filters, kernel_shape, strides)
+        _, response = self_attention(tensor, filters, kernel_size, strides)
         responses.append(response)
 
     return tf.concat(responses, axis=-1)
 
-def encoder(tensor, is_training, hidden=1024, headers=8, filters=64, kernel_shape=(5, 5), strides=(1, 1)):
+def encoder(tensor, is_training, hidden=1024, headers=8, filters=64, kernel_size=(5, 5), strides=(1, 1)):
     orig_tensor = tensor
     with tf.name_scope('multi_head_attention') as name_scope:
-        tensor = multi_head_attention(tensor, headers, filters, kernel_shape, strides)
+        tensor = multi_head_attention(tensor, headers, filters, kernel_size, strides)
         tf.logging.info('image after unit %s: %s', name_scope, tensor.get_shape())
 
         with tf.name_scope('residual') as name_scope:

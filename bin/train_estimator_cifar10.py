@@ -44,10 +44,12 @@ if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('--model-dir', type=str, default=None)
     parser.add_argument('--gpus', type=int, nargs='*', default=[0])
+    parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
     device_info = Devices.get_devices(gpu_ids=args.gpus)
 
-    tf.logging.set_verbosity(tf.logging.INFO)
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5' if args.debug else '3' 
+    tf.logging.set_verbosity(tf.logging.DEBUG if args.debug else tf.logging.INFO)
     tf.logging.info('\nargs: %s\ndevice info: %s', args, device_info)
 
     input_functions = {
@@ -56,10 +58,13 @@ if __name__ == '__main__':
     }
 
     model_fn = Classifier.get('transformer', ImageTransformerCifar10)
+    session_config = tf.ConfigProto()
+    # session_config.gpu_options.allocator_type="BFC"
+    # session_config.log_device_placement=True
     config = tf.estimator.RunConfig(
         model_dir=args.model_dir,
         save_summary_steps=10,
-        session_config=None
+        session_config=session_config
     )
     hparams = {}
     hparams['weight_decay'] = 0.0001
