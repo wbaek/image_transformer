@@ -33,7 +33,8 @@ def unroll(tensor, kernel_size=(3, 3), strides=(1, 1)):
 
     return unrolled
 
-def reroll(tensor, width, height, depth, kernel_size=(3, 3), strides=(1, 1)):
+def reroll(tensor, width, height, depth, kernel_size=(3, 3), strides=(3, 3)):
+    assert kernel_size == strides
     s_width = width // strides[0]
     s_height = height // strides[1]
 
