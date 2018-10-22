@@ -17,7 +17,8 @@ def unroll(tensor, kernel_shape=(3, 3), strides=(1, 1)):
     sliced_list = []
     for y in range(0, height, strides[1]):
         for x in range(0, width, strides[0]):
-            sliced = tensor[:, y:y+kernel_shape[1], x:x+kernel_shape[0], :]
+            sliced = tf.slice(tensor, [0, y, x, 0], [-1, kernel_shape[1], kernel_shape[0], -1])
+            #sliced = tensor[:, y:y+kernel_shape[1], x:x+kernel_shape[0], :]
             sliced_list.append(tf.reshape(sliced, (-1, 1, kernel_shape[1]*kernel_shape[0], depth)))
     unrolled = tf.concat(sliced_list, axis=1)
 
