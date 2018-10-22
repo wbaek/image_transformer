@@ -45,12 +45,13 @@ def self_attention(tensor, filters=64, query_size=(4, 4), key_size=(8, 8)):
     return attention(query, key, value, query_size, key_size)
 
 def multi_head_attention(tensor, headers=8, filters=64, query_size=(4, 4), key_size=(8, 8)):
-    responses = []
+    distributions, responses = [], []
     for _ in range(headers):
-        _, response = self_attention(tensor, filters, query_size, key_size)
+        distribution, response = self_attention(tensor, filters, query_size, key_size)
+        distributions.append(distribution)
         responses.append(response)
-        
-    return tf.concat(responses, axis=-1)
+
+    return distributions, tf.concat(responses, axis=-1)
 
 def _residual(tensor, orig_tensor, is_training):
     with tf.name_scope('residual') as name_scope:
@@ -66,7 +67,7 @@ def _residual(tensor, orig_tensor, is_training):
 def encoder(tensor, is_training, hidden=1024, headers=8, filters=64, query_size=(4, 4), key_size=(8, 8)):
     orig_tensor = tensor
     with tf.name_scope('multi_head_attention') as name_scope:
-        tensor = multi_head_attention(tensor, headers, filters, query_size, key_size)
+        distributions, tensor = multi_head_attention(tensor, headers, filters, query_size, key_size)
         tf.logging.info('image after unit %s: %s', name_scope, tensor.get_shape())
         tensor = _residual(tensor, orig_tensor, is_training)
         tf.logging.info('image after unit %s: %s', name_scope, tensor.get_shape())
@@ -81,4 +82,4 @@ def encoder(tensor, is_training, hidden=1024, headers=8, filters=64, query_size=
         tensor = _residual(tensor, orig_tensor, is_training)
         tf.logging.info('image after unit %s: %s', name_scope, tensor.get_shape())
 
-    return tensor
+    return distributions, tensor

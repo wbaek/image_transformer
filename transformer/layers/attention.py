@@ -3,7 +3,7 @@ from __future__ import absolute_import
 
 import tensorflow as tf
 
-from transformer.ops.unrolling import unroll
+from transformer.ops.unrolling import pad, unroll
 
 # scaled dot-product attention
 def attention(query, key, value, kernel_size=(5, 5), strides=(1, 1)):
@@ -11,8 +11,8 @@ def attention(query, key, value, kernel_size=(5, 5), strides=(1, 1)):
     _, _, _, value_depth = value.shape.as_list()
 
     unrolled_query = tf.reshape(unroll(query, kernel_size=(1, 1), strides=strides), (-1, 1, depth))
-    unrolled_key = tf.reshape(unroll(key, kernel_size=kernel_size, strides=strides), (-1, kernel_size[0] * kernel_size[1], depth))
-    unrolled_value = tf.reshape(unroll(value, kernel_size=kernel_size, strides=strides), (-1, kernel_size[0] * kernel_size[1], value_depth))
+    unrolled_key = tf.reshape(unroll(pad(key, kernel_size=kernel_size), kernel_size=kernel_size, strides=strides), (-1, kernel_size[0] * kernel_size[1], depth))
+    unrolled_value = tf.reshape(unroll(pad(value, kernel_size=kernel_size), kernel_size=kernel_size, strides=strides), (-1, kernel_size[0] * kernel_size[1], value_depth))
     tf.logging.debug('attention tensor query: %s', unrolled_query.get_shape())
     tf.logging.debug('attention tensor key:   %s', unrolled_key.get_shape())
     tf.logging.debug('attention tensor value: %s', unrolled_value.get_shape())

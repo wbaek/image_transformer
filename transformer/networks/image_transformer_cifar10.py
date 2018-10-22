@@ -13,22 +13,24 @@ class ImageTransformerCifar10():
         query_size = (4, 4)
         key_size = (8, 8)
         with tf.name_scope('stage0'):
+            tf.summary.image('input', x, max_outputs=8)
             x = x / 128 - 1
             x = tf.layers.conv2d(x, 64 * 8, kernel_size=(7, 7), strides=(2, 2), padding='SAME')
 
         with tf.name_scope('stage1'):
-            x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
-            x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
+            _, x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
+            _, x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
             x = tf.layers.max_pooling2d(x, pool_size=(2, 2), strides=(2, 2))
 
         with tf.name_scope('stage2'):
-            x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
-            x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
+            _, x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
+            _, x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
             x = tf.layers.max_pooling2d(x, pool_size=(2, 2), strides=(2, 2))
 
         with tf.name_scope('stage3'):
-            x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
-            x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
+            _, x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
+            distributions, x = encoder(x, self.is_training, hidden=512, headers=8, filters=64, query_size=query_size, key_size=key_size)
+            tf.summary.image('distributions', tf.expand_dims(distributions[0], axis=-1), max_outputs=8)
             # x = tf.layers.max_pooling2d(x, pool_size=(2, 2), strides=(2, 2))
 
         with tf.name_scope('classifier') as name_scope:

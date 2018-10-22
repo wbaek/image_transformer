@@ -43,6 +43,7 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--model-dir', type=str, default=None)
+    parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--gpus', type=int, nargs='*', default=[0])
     parser.add_argument('--debug', action='store_true')
     args = parser.parse_args()
@@ -69,7 +70,7 @@ if __name__ == '__main__':
     hparams = {}
     hparams['weight_decay'] = 0.0001
     hparams['optimizer'] = tf.train.MomentumOptimizer(
-        learning_rate=0.0001,
+        learning_rate=args.lr,
         momentum=0.9
     )
     hparams = tf.contrib.training.HParams(**hparams)
