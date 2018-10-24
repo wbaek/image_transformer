@@ -9,6 +9,8 @@ from transformer.ops.unrolling import unroll, reroll, pad
 def attention(query, key, value, query_size=(4, 4), key_size=(8, 8)):
     _, height, width, depth = query.shape.as_list()
     _, _, _, value_depth = value.shape.as_list()
+    assert width % query_size[0] == 0
+    assert height % query_size[1] == 0
 
     padding_kernel_size = ((key_size[0] - query_size[0]) * 2, (key_size[1] - query_size[1]) * 2)
 
@@ -34,6 +36,9 @@ def attention(query, key, value, query_size=(4, 4), key_size=(8, 8)):
 
     response = reroll(response, width, height, value_depth, query_size, query_size)
     tf.logging.debug('attention tensor reshaped response: %s', response.get_shape())
+
+    distribution = tf.reshape(distribution, [-1, height // query_size[1], width // query_size[0], query_size[0] * query_size[1], key_size[0] * key_size[1]])
+    tf.logging.debug('attention tensor reshaped distribution: %s', response.get_shape())
 
     return distribution, response
 
