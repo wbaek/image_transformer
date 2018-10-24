@@ -1,5 +1,7 @@
 # Image Transformer
 [![tensorflow](https://img.shields.io/badge/tensorflow-1.11-ed6c20.svg)](https://www.tensorflow.org/)
+[![CodeFactor](https://www.codefactor.io/repository/github/wbaek/image_transformer/badge)](https://www.codefactor.io/repository/github/wbaek/image_transformer)
+[![CircleCI](https://circleci.com/gh/wbaek/image_transformer.svg?style=svg)](https://circleci.com/gh/wbaek/image_transformer)
 
 
 ## Introduction
