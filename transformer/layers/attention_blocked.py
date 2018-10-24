@@ -13,7 +13,7 @@ def attention(query, key, value, query_size=(4, 4), key_size=(8, 8)):
     padding_kernel_size = ((key_size[0] - query_size[0]) * 2, (key_size[1] - query_size[1]) * 2)
 
     unrolled_query = unroll(query, kernel_size=query_size, strides=query_size)
-    unrolled_query = tf.reshape(query, (-1, query_size[0] * query_size[1], depth))
+    unrolled_query = tf.reshape(unrolled_query, (-1, query_size[0] * query_size[1], depth))
 
     unrolled_key = unroll(pad(key, kernel_size=padding_kernel_size), kernel_size=key_size, strides=query_size)
     unrolled_key = tf.reshape(unrolled_key, (-1, key_size[0] * key_size[1], depth))
@@ -38,9 +38,12 @@ def attention(query, key, value, query_size=(4, 4), key_size=(8, 8)):
     return distribution, response
 
 def self_attention(tensor, filters=64, query_size=(4, 4), key_size=(8, 8)):
-    query = tf.layers.conv2d(tensor, filters, kernel_size=(1, 1))
-    key = tf.layers.conv2d(tensor, filters, kernel_size=(1, 1))
-    value = tf.layers.conv2d(tensor, filters, kernel_size=(1, 1))
+    with tf.name_scope('attention/query'):
+        query = tf.layers.conv2d(tensor, filters, kernel_size=(1, 1))
+    with tf.name_scope('attention/key'):
+        key = tf.layers.conv2d(tensor, filters, kernel_size=(1, 1))
+    with tf.name_scope('attention/value'):
+        value = tf.layers.conv2d(tensor, filters, kernel_size=(1, 1))
     
     return attention(query, key, value, query_size, key_size)
 
@@ -53,11 +56,13 @@ def multi_head_attention(tensor, headers=8, filters=64, query_size=(4, 4), key_s
 
     return distributions, tf.concat(responses, axis=-1)
 
-def _residual(tensor, orig_tensor, is_training):
+def _residual(tensor, orig_tensor, is_training, projection=True):
+    assert tensor.shape[1:-1] == orig_tensor.shape[1:-1]
     with tf.name_scope('residual') as name_scope:
-        if tensor.shape[1:-1] != orig_tensor.shape[1:-1]:
-            orig_tensor = tf.layers.conv2d(orig_tensor, headers * filters, kernel_size=(1, 1))
-        if tensor.shape[1:] == orig_tensor.shape[1:]:
+        if projection:
+            if tensor.shape[1:] != orig_tensor.shape[1:]:
+                depth = tensor.shape.as_list()[-1]
+                orig_tensor = tf.layers.conv2d(orig_tensor, depth, kernel_size=(1, 1))
             tensor = tf.add(tensor, orig_tensor)
         else:
             tensor = tf.concat([tensor, orig_tensor], axis=-1)
@@ -65,6 +70,13 @@ def _residual(tensor, orig_tensor, is_training):
     return tensor
 
 def encoder(tensor, is_training, hidden=1024, headers=8, filters=64, query_size=(4, 4), key_size=(8, 8)):
+    query_size = list(query_size)
+    key_size = list(key_size)
+    tensor_size = tensor.shape.as_list()[1:-1][::-1]
+    for i, (qsize, tsize) in enumerate(zip(query_size, tensor_size)):
+        query_size[i] = qsize if qsize < tsize else tsize
+        key_size[i] = key_size[i] if qsize < tsize else tsize
+
     orig_tensor = tensor
     with tf.name_scope('multi_head_attention') as name_scope:
         distributions, tensor = multi_head_attention(tensor, headers, filters, query_size, key_size)

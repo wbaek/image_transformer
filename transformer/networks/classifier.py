@@ -44,6 +44,13 @@ class Classifier():
                     gradients = tf.gradients(loss, weights)
             if is_training:
                 tf.summary.scalar("accuracy", metrics['accuracy'][1])
+            with tf.name_scope('summaries'):
+                for weight, gradient in zip(weights, gradients):
+                    variable_name = weight.name.replace(':', '_')
+                    if 'BatchNorm' in variable_name or 'batch_normalization' in variable_name:
+                        continue
+                    tf.summary.histogram(variable_name, weight)
+                    tf.summary.histogram(variable_name + '/gradients', gradient)
 
             with tf.name_scope('optimizer'):
                 operations = [

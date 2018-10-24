@@ -9,8 +9,8 @@ def pad(tensor, kernel_size):
     assert len(tensor_shape) == 4
 
     batch, height, width, depth = tensor_shape
-    pad_beg = [(size - 1) // 2 for size in kernel_size]
-    pad_end = [(size - 1) - beg for size, beg in zip(kernel_size, pad_beg)]
+    pad_beg = [max(0, (size - 1) // 2) for size in kernel_size]
+    pad_end = [max(0, (size - 1) - beg) for size, beg in zip(kernel_size, pad_beg)]
     tensor = tf.pad(tensor, [[0, 0], [pad_beg[1], pad_end[1]], [pad_beg[0], pad_end[0]], [0, 0]])
 
     return tensor
@@ -22,7 +22,7 @@ def unroll(tensor, kernel_size=(3, 3), strides=(1, 1)):
     batch, height, width, depth = tensor_shape
     width = width - (kernel_size[0] - 1)
     height = height - (kernel_size[1] - 1)
-    
+
     sliced_list = []
     for y in range(0, height, strides[1]):
         for x in range(0, width, strides[0]):

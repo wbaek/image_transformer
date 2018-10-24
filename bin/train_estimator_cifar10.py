@@ -1,6 +1,7 @@
 import os
 import sys
 
+import numpy as np
 import tensorflow as tf
 import tensorpack as tp
 import tensorpack.dataflow as df
@@ -16,8 +17,8 @@ def get_input_fn(name, batch_size=32):
 
     is_training = name == 'train'
     ds = df.dataset.Cifar10(name, shuffle=is_training)
+    ds = df.MapDataComponent(ds, lambda x: np.pad(x, [(4, 4), (4, 4), (0, 0)], mode='reflect'), index=0)
     augmentors = [
-        tp.imgaug.CenterPaste((40, 40)),
         tp.imgaug.RandomCrop((32, 32)),
         tp.imgaug.Flip(horiz=True),
         #tp.imgaug.MapImage(lambda x: (x - pp_mean)/128.0),
@@ -25,6 +26,9 @@ def get_input_fn(name, batch_size=32):
     if is_training:
         ds = df.RepeatedData(ds, -1)
         ds = tp.AugmentImageComponent(ds, augmentors)
+    else:
+        ds = tp.AugmentImageComponent(ds, [tp.imgaug.CenterCrop((32, 32))])
+
     ds = tp.AugmentImageComponent(ds, [tp.imgaug.Resize((image_size, image_size))])
     ds = df.MapData(ds, tuple)  # for tensorflow.data.dataset
     ds.reset_state()
@@ -43,6 +47,8 @@ if __name__ == '__main__':
     import argparse
     parser = argparse.ArgumentParser()
     parser.add_argument('--model-dir', type=str, default=None)
+    parser.add_argument('-e', '--epochs', type=int, default=50)
+    parser.add_argument('--batch', type=int, default=128)
     parser.add_argument('--lr', type=float, default=0.0001)
     parser.add_argument('--gpus', type=int, nargs='*', default=[0])
     parser.add_argument('--debug', action='store_true')
@@ -54,8 +60,8 @@ if __name__ == '__main__':
     tf.logging.info('\nargs: %s\ndevice info: %s', args, device_info)
 
     input_functions = {
-        'train': get_input_fn('train', 64),
-        'eval': get_input_fn('test', 64)
+        'train': get_input_fn('train', args.batch),
+        'eval': get_input_fn('test', args.batch * 2)
     }
 
     model_fn = Classifier.get('transformer', ImageTransformerCifar10)
@@ -68,10 +74,9 @@ if __name__ == '__main__':
         session_config=session_config
     )
     hparams = {}
-    hparams['weight_decay'] = 0.0001
-    hparams['optimizer'] = tf.train.MomentumOptimizer(
+    hparams['weight_decay'] = 0.0005
+    hparams['optimizer'] = tf.train.AdamOptimizer(
         learning_rate=args.lr,
-        momentum=0.9
     )
     hparams = tf.contrib.training.HParams(**hparams)
 
@@ -81,6 +86,6 @@ if __name__ == '__main__':
         params=hparams
     )
 
-    for epoch in range(50):
-        estimator.train(input_fn=input_functions['train'], steps=(50000 // 32))
-        estimator.evaluate(input_fn=input_functions['eval'], steps=100)
+    for epoch in range(args.epochs):
+        estimator.train(input_fn=input_functions['train'], steps=(50000 // args.batch))
+        estimator.evaluate(input_fn=input_functions['eval'], steps=(10000 // (args.batch * 2)))
