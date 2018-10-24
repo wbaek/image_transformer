@@ -30,24 +30,6 @@ class ImageTransformerCifar10():
             _, x = encoder(x, self.is_training, hidden=hidden, headers=headers, filters=filters, query_size=query_size, key_size=key_size)
             _, x = encoder(x, self.is_training, hidden=hidden, headers=headers, filters=filters, query_size=query_size, key_size=key_size)
 
-        '''
-        with tf.name_scope('stage3'):
-            x = tf.layers.max_pooling2d(x, pool_size=(2, 2), strides=(2, 2))
-            _, x = encoder(x, self.is_training, hidden=hidden, headers=headers, filters=filters, query_size=query_size, key_size=key_size)
-            _, x = encoder(x, self.is_training, hidden=hidden, headers=headers, filters=filters, query_size=query_size, key_size=key_size)
-            
-        with tf.name_scope('stage4'):
-            x = tf.layers.max_pooling2d(x, pool_size=(2, 2), strides=(2, 2))
-            _, x = encoder(x, self.is_training, hidden=hidden, headers=headers, filters=filters, query_size=query_size, key_size=key_size)
-            _, x = encoder(x, self.is_training, hidden=hidden, headers=headers, filters=filters, query_size=query_size, key_size=key_size)
-            x = tf.layers.max_pooling2d(x, pool_size=(2, 2), strides=(2, 2))
-
-        with tf.name_scope('stage5'):
-            x = tf.layers.max_pooling2d(x, pool_size=(2, 2), strides=(2, 2))
-            _, x = encoder(x, self.is_training, hidden=hidden, headers=headers, filters=filters, query_size=query_size, key_size=key_size)
-            _, x = encoder(x, self.is_training, hidden=hidden, headers=headers, filters=filters, query_size=query_size, key_size=key_size)
-        '''
-
         with tf.name_scope('classifier') as name_scope:
             x = tf.reduce_mean(x, [1, 2]) # global average pool
             flattens_size = reduce((lambda i1, i2: i1 * i2), x.shape.as_list()[1:])

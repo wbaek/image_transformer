@@ -11,7 +11,7 @@ def test_attention():
     values = tf.zeros((4, 32, 32, 16), dtype=tf.float32)
     distribution, output = attention(tensor, tensor, values, kernel_size=(5, 5))
     assert distribution.shape.as_list() == [4, 32, 32, 1, 5, 5]
-    assert output.shape.as_list() == [4, 32, 32, 16] 
+    assert output.shape.as_list() == [4, 32, 32, 16]
 
 def test_self_attention():
     tensor = tf.zeros((4, 32, 32, 3), dtype=tf.float32)
@@ -23,8 +23,8 @@ def test_self_attention():
     assert output.shape.as_list() == [4, 16, 16, 16]
 
 def test_attention_data():
-    index = np.array([
-        [ [0, 1, 2, 3, 4, 5, 6, 7, 8],
+    index = np.array(
+        [[[0, 1, 2, 3, 4, 5, 6, 7, 8],
           [3, 4, 5, 6, 7, 8, 0, 1, 2],
           [6, 7, 8, 0, 1, 2, 3, 4, 5],
           [0, 1, 2, 3, 4, 5, 6, 7, 8],
@@ -32,7 +32,7 @@ def test_attention_data():
           [6, 7, 8, 0, 1, 2, 3, 4, 5],
           [0, 1, 2, 3, 4, 5, 6, 7, 8],
           [3, 4, 5, 6, 7, 8, 0, 1, 2],
-          [6, 7, 8, 0, 1, 2, 3, 4, 5] ] ] * 4, dtype=np.int64)
+          [6, 7, 8, 0, 1, 2, 3, 4, 5]]] * 4, dtype=np.int64)
     vectors = np.eye(12)[index.reshape(-1)].reshape(4, 9, 9, 12)
     assert vectors.shape == (4, 9, 9, 12)
     assert (vectors[0, 0, 0, :] == [1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0]).all()

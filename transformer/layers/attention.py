@@ -7,7 +7,7 @@ from transformer.ops.unrolling import pad, unroll
 
 # scaled dot-product attention
 def attention(query, key, value, kernel_size=(5, 5), strides=(1, 1)):
-    batch, height, width, depth = query.shape.as_list()
+    _, height, width, depth = query.shape.as_list()
     _, _, _, value_depth = value.shape.as_list()
 
     unrolled_query = tf.reshape(unroll(query, kernel_size=(1, 1), strides=strides), (-1, 1, depth))

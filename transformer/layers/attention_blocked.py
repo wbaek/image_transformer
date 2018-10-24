@@ -7,7 +7,7 @@ from transformer.ops.unrolling import unroll, reroll, pad
 
 # scaled dot-product attention
 def attention(query, key, value, query_size=(4, 4), key_size=(8, 8)):
-    batch, height, width, depth = query.shape.as_list()
+    _, height, width, depth = query.shape.as_list()
     _, _, _, value_depth = value.shape.as_list()
 
     padding_kernel_size = ((key_size[0] - query_size[0]) * 2, (key_size[1] - query_size[1]) * 2)
@@ -44,7 +44,7 @@ def self_attention(tensor, filters=64, query_size=(4, 4), key_size=(8, 8)):
         key = tf.layers.conv2d(tensor, filters, kernel_size=(1, 1))
     with tf.name_scope('attention/value'):
         value = tf.layers.conv2d(tensor, filters, kernel_size=(1, 1))
-    
+
     return attention(query, key, value, query_size, key_size)
 
 def multi_head_attention(tensor, headers=8, filters=64, query_size=(4, 4), key_size=(8, 8)):
@@ -58,7 +58,7 @@ def multi_head_attention(tensor, headers=8, filters=64, query_size=(4, 4), key_s
 
 def _residual(tensor, orig_tensor, is_training, projection=True):
     assert tensor.shape[1:-1] == orig_tensor.shape[1:-1]
-    with tf.name_scope('residual') as name_scope:
+    with tf.name_scope('residual') as _:
         if projection:
             if tensor.shape[1:] != orig_tensor.shape[1:]:
                 depth = tensor.shape.as_list()[-1]

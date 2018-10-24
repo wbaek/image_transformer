@@ -55,7 +55,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     device_info = Devices.get_devices(gpu_ids=args.gpus)
 
-    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5' if args.debug else '3' 
+    os.environ['TF_CPP_MIN_LOG_LEVEL'] = '5' if args.debug else '3'
     tf.logging.set_verbosity(tf.logging.DEBUG if args.debug else tf.logging.INFO)
     tf.logging.info('\nargs: %s\ndevice info: %s', args, device_info)
 
